@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser"
 import session from 'express-session';
 import MongoDBStore from 'connect-mongodb-session'
 import mongoose from 'mongoose';
+import { DB_NAME } from "./constants.js";
 
 const app = express()
 
