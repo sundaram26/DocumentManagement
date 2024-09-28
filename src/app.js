@@ -19,7 +19,7 @@ app.use(session({
     resave: false,
     saveUninitialized: true,
     cookie: { 
-        secure: false,
+        secure: true,
         maxAge: 2* 60 * 60 * 1000 
     } // Set to true if using HTTPS
 }));
