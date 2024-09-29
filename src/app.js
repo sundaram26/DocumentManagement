@@ -19,6 +19,7 @@ store.on('error', function (error) {
     console.error('Session Store Error:', error);
 });
 
+app.set('trust proxy', 1);
 
 app.use(cors({
     origin: process.env.CORS_ORIGIN,
