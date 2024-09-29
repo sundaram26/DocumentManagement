@@ -2,8 +2,23 @@ import express from "express"
 import cors from "cors"
 import cookieParser from "cookie-parser"
 import session from 'express-session';
+import MongoDBStore from 'connect-mongodb-session'
+import {DB_NAME} from './constants.js'
 
+const MongoStore = MongoDBStore(session);
 const app = express()
+
+
+const store = new MongoStore({
+    uri: `${process.env.MONGODB_URI}/${DB_NAME}`, 
+    collection: 'sessions', 
+    expires: 2 * 60 * 60 * 1000 
+});
+
+store.on('error', function (error) {
+    console.error('Session Store Error:', error);
+});
+
 
 app.use(cors({
     origin: process.env.CORS_ORIGIN,
@@ -18,6 +33,7 @@ app.use(session({
     secret: process.env.SESSION_SECRET_KEY, 
     resave: false,
     saveUninitialized: true,
+    store: store,
     cookie: { 
         secure: true,
         sameSite: "none",
