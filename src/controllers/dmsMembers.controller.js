@@ -403,7 +403,7 @@ const generateActivityId = async () => {
   // Find the last meeting report with the given prefix
   const lastReport = await ActivityReport.findOne({ 
       activityId: { $regex: `^${prefix}` }
-  }).sort({ meetingId: -1 });
+  }).sort({ activityId: -1 });
 
   let lastId = lastReport ? lastReport.activityId : `${prefix}0000`;
 
