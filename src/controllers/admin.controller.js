@@ -6,7 +6,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 const getUnapprovedUsers = asyncHandler(async (req, res) => {
     try {
-        const users = await User.find({ isApproved: false });
+        const users = await User.find({ isVerified: true, isApproved: false });
         // console.log("Users: ", users)
         if (!users.length) {
             // return res.json(new ApiResponse(201, "No unapproved users found"))
