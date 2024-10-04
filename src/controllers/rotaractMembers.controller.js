@@ -751,6 +751,7 @@ const deleteProjectReport = asyncHandler(async (req, res) => {
   }
 });
 
+
 const generateDraftId = async () => {
 
   const prefix = 'DRAFT';

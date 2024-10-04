@@ -8,7 +8,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 const generateAndSendOTP = asyncHandler(async (email) => {
 
     const otp = generateOTP();
-    const otpExpiresAt = new Date(Date.now() + 1 * 60 * 1000); 
+    const otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000); 
 
     const user = await User.findOneAndUpdate(
         { email },
