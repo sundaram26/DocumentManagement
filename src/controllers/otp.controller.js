@@ -27,13 +27,13 @@ const generateAndSendOTP = asyncHandler(async (email) => {
 
 const verifyOTP = asyncHandler(async (req, res, next) => {
     try {
-        console.log('Session:', req.session.userEmail);
+        // console.log('Session:', req.session.userEmail);
 
         const email = req.session.userEmail;
         const otp = req.body.verificationCode;
         
-        console.log('Email:', email);
-        console.log('OTP:', otp);
+        // console.log('Email:', email);
+        // console.log('OTP:', otp);
 
         // Validate input
         if (!email || !otp) {
