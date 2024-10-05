@@ -79,7 +79,7 @@ const projectReportSchema = new Schema(
                 'Editorial', 
                 'Public Relations'
             ], 
-            required: true
+            // required: true
         },
         isDraft: { 
             type: Boolean, 
