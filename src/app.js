@@ -44,6 +44,11 @@ app.use(session({
 }));
 
 
+// Health check endpoint
+app.get('/health-check', (req, res) => {
+    res.status(200).send('Server is up and running');
+});
+
 
 //route import
 import userRoutes from "./routes/user.routes.js"
