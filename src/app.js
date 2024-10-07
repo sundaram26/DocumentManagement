@@ -44,8 +44,8 @@ app.use(session({
 }));
 
 
-// Health check endpoint
-app.get('/health-check', (req, res) => {
+// Health check endpoint(url given to uptime robot)
+app.get('/ping', (req, res) => {
     res.status(200).send('Server is up and running');
 });
 
