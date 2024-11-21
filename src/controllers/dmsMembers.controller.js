@@ -430,6 +430,7 @@ const createActivityReport = asyncHandler(async (req, res) => {
     endDate,
     isDraft,
     isJointActivity,
+    jointActivityPartner,
     activityAim,
     activityGroundwork,
     expense,
@@ -459,6 +460,12 @@ const createActivityReport = asyncHandler(async (req, res) => {
 
   if (!chairPersons || chairPersons.length === 0) {
     return res.status(400).json({ message: 'At least one chairperson must be selected.' });
+  }
+
+  if(isJointActivity){
+    if ([jointActivityPartner].some(field => !field || field.trim() === '')) {
+      throw new ApiError(400, "All required fields must be filled.");
+    }
   }
 
   // Generate a new activity ID
@@ -516,6 +523,7 @@ const createActivityReport = asyncHandler(async (req, res) => {
     endDate,
     isDraft,
     isJointActivity,
+    jointActivityPartner,
     activityAim,
     activityGroundwork,
     expense,
@@ -668,6 +676,7 @@ const createActivityDraft = asyncHandler(async (req, res) => {
     endDate,
     isDraft,
     isJointActivity,
+    jointActivityPartner,
     activityAim,
     activityGroundwork,
     expense,
@@ -719,6 +728,7 @@ const createActivityDraft = asyncHandler(async (req, res) => {
             startDate,
             endDate,
             isJointActivity: isJointActivityBool,
+            jointActivityPartner,
             activityAim,
             activityGroundwork,
             expense: expenseValue,
@@ -754,6 +764,7 @@ const createActivityDraft = asyncHandler(async (req, res) => {
           startDate,
           endDate,
           isJointActivity: isJointActivityBool,
+          jointActivityPartner,
           activityAim,
           activityGroundwork,
           expense: expenseValue,

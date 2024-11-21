@@ -33,7 +33,7 @@ const projectDraftSchema = new Schema(
         },
         projectMode: { 
             type: String, 
-            enum: ['online', 'on-ground'],
+            enum: ['online', 'on-ground', 'both'],
             default: null, 
         },
         startDate: { 
@@ -50,11 +50,11 @@ const projectDraftSchema = new Schema(
                 'Career Developement', 
                 'International Service', 
                 'Sports', 
-                'Digital Communication', 
-                'Partner In Service', 
+                'Digital Communications', 
+                'Partners In Service', 
                 'Training, Revival And Sustenance', 
                 'Editorial', 
-                'Public Relations'
+                'Public Relations And Marketing'
             ],
             default: null,
         },
@@ -67,11 +67,11 @@ const projectDraftSchema = new Schema(
                 'Career Developement', 
                 'International Service', 
                 'Sports', 
-                'Digital Communication', 
-                'Partner In Service', 
+                'Digital Communications', 
+                'Partners In Service', 
                 'Training Revival And Sustenance', 
                 'Editorial', 
-                'Public Relations'
+                'Public Relations And Marketing'
             ], 
             default: null,
         },
@@ -86,6 +86,9 @@ const projectDraftSchema = new Schema(
         },
         isJointProject: { 
             type: Boolean, 
+        },
+        jointProjectPartner: {
+            type: String,
         },
         // status: { 
         //     type: String, 
@@ -112,6 +115,9 @@ const projectDraftSchema = new Schema(
             type: String,
         },
         projectGroundwork: {
+            type: String,
+        },
+        projectSummary: {
             type: String,
         },
         feedbackList: [
@@ -147,6 +153,18 @@ const projectDraftSchema = new Schema(
             ],
             default: [],
             // required: true 
+        },
+        activeHomeClubMembers: {
+            type: Number,
+            default: 0
+        },
+        guestHomeClubMembers: {
+            type: Number,
+            default: 0
+        },
+        districtCouncilMembers: {
+            type: Number,
+            default: 0
         },
         rotarians: { 
             type: Number,

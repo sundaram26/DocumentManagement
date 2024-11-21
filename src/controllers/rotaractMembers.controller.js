@@ -6,7 +6,10 @@ import { ProjectReport } from "../models/rotaractProject.model.js"
 import { ProjectDraft } from "../models/projectDraft.model.js";
 import { RotaractMeetingDraft } from "../models/rotaractMeetingDraft.model.js";
 import mongoose from "mongoose";
-// import { uploadOnCloudinary } from "../utils/fileUpload.js";
+import { upload } from "../middlewares/multer.middleware.js";
+import { uploadOnCloudinary } from "../utils/fileUpload.js";
+import { v2 as cloudinary } from 'cloudinary';
+import { RotaractMou } from "../models/rotaractMou.model.js";
 
 const generateMeetingId = async () => {
 
@@ -47,6 +50,9 @@ const createMeetingReport = asyncHandler(async (req, res) => {
     expense, 
     profit, 
     loss, 
+    activeHomeClubMembers,
+    guestHomeClubMembers,
+    districtCouncilMembers,
     rotarians, 
     alumnus, 
     interactors, 
@@ -71,6 +77,9 @@ const createMeetingReport = asyncHandler(async (req, res) => {
     expense < 0 ||
     profit < 0 ||
     loss < 0 ||
+    activeHomeClubMembers < 0 ||
+    guestHomeClubMembers < 0 ||
+    districtCouncilMembers < 0 ||
     rotarians < 0 ||
     alumnus < 0 ||
     interactors < 0 ||
@@ -131,6 +140,9 @@ const createMeetingReport = asyncHandler(async (req, res) => {
       expense, 
       profit, 
       loss, 
+      activeHomeClubMembers,
+      guestHomeClubMembers,
+      districtCouncilMembers,
       rotarians, 
       alumnus, 
       interactors, 
@@ -285,6 +297,9 @@ const createRotaractMeetingDraft = asyncHandler(async (req, res) => {
     expense,
     profit,
     loss,
+    activeHomeClubMembers,
+    guestHomeClubMembers,
+    districtCouncilMembers,
     rotarians,
     alumnus,
     interactors,
@@ -319,6 +334,9 @@ const createRotaractMeetingDraft = asyncHandler(async (req, res) => {
     const expenseValue = Number(expense);
     const profitValue = Number(profit);
     const lossValue = Number(loss);
+    const activeHomeClubMembersValue = Number(activeHomeClubMembers);
+    const guestHomeClubMembersValue = Number(guestHomeClubMembers);
+    const districtCouncilMembersValue = Number(districtCouncilMembers);
     const rotariansValue = Number(rotarians);
     const alumnusValue = Number(alumnus);
     const interactorsValue = Number(interactors);
@@ -350,6 +368,9 @@ const createRotaractMeetingDraft = asyncHandler(async (req, res) => {
             expense: expenseValue,
             profit: profitValue,
             loss: lossValue,
+            activeHomeClubMembers: activeHomeClubMembersValue,
+            guestHomeClubMembers: guestHomeClubMembersValue,
+            districtCouncilMembers: districtCouncilMembersValue,
             rotarians: rotariansValue,
             alumnus: alumnusValue,
             interactors: interactorsValue,
@@ -390,6 +411,9 @@ const createRotaractMeetingDraft = asyncHandler(async (req, res) => {
           expense: expenseValue,
           profit: profitValue,
           loss: lossValue,
+          activeHomeClubMembers: activeHomeClubMembersValue,
+          guestHomeClubMembers: guestHomeClubMembersValue,
+          districtCouncilMembers: districtCouncilMembersValue,
           rotarians: rotariansValue,
           alumnus: alumnusValue,
           interactors: interactorsValue,
@@ -505,7 +529,7 @@ const generateProjectId = async () => {
 const createProjectReport = asyncHandler(async (req, res) => {
   let { 
     projectName,
-    facultyName,
+    // facultyName,
     venue,
     projectMode,
     startDate,
@@ -516,14 +540,19 @@ const createProjectReport = asyncHandler(async (req, res) => {
     isAnInstallation,
     isFlagship,
     isJointProject,
+    jointProjectPartner,
     projectAim,
     projectGroundwork,
+    projectSummary,
     income,
     expense,
     profit,
     loss,
     feedbackList,
     chairPersons,
+    activeHomeClubMembers,
+    guestHomeClubMembers,
+    districtCouncilMembers,
     rotarians,
     alumnus,
     interactors,
@@ -537,36 +566,41 @@ const createProjectReport = asyncHandler(async (req, res) => {
     supportDocumentUrl,
   } = req.body;
 
-  // let { chairPersons } = req.body
-  // console.log("chair persons: ",req.body)
-
+  // console.log("Req Body: ", req.body)
+  // console.log("Req files: ", req.file)
+  const financeExcelSheet = req.file;
+  // console.log("finance excel sheet: ", financeExcelSheet);
   const submittedBy = req.user._id;
-  // console.log("submitted By: ",submittedBy)
-
-  // console.log("Feedback List Type:", typeof feedbackList);
-  // console.log("Feedback List:", feedbackList);
-
-
-  if ([projectName, facultyName, venue, projectMode, startDate, endDate, avenue1, coverImageUrl, attendanceImageUrl, supportDocumentUrl].some(field => !field || field.trim() === '')) {
+  
+  if ([projectName, venue, projectMode, startDate, endDate, avenue1, coverImageUrl, attendanceImageUrl, supportDocumentUrl].some(field => !field || field.trim() === '')) {
     throw new ApiError(400, "All required fields must be filled.");
   }
+
   if (avenue2 === 'select' || avenue2 === '') {
     avenue2 = '-'
   }
-  // console.log("avenue2: ", avenue2)
+
+  // console.log("avenue: ", avenue2)
 
   if (typeof chairPersons === 'string') {
     chairPersons = chairPersons.split(',').map(person => person.trim());
   }
-  // console.log("chair person: ", chairPersons)
 
   if (!chairPersons || chairPersons.length === 0) {
     return res.status(400).json({ message: 'At least one chairperson must be selected.' });
   }
 
+  if(isJointProject){
+    if ([jointProjectPartner].some(field => !field || field.trim() === '')) {
+      throw new ApiError(400, "All required fields must be filled.");
+    }
+  }
+
+  const financeExcelSheetData = await uploadOnCloudinary(financeExcelSheet.path, 'project_reports')
+
+  // console.log("finance excel sheet: ", financeExcelSheet)
   // Generate a new project ID
   const projectId = await generateProjectId();
-  // console.log(projectId)
 
   let feedbackArray = [];
   if (feedbackList) {
@@ -591,12 +625,6 @@ const createProjectReport = asyncHandler(async (req, res) => {
   const sevenDaysAfterEndDate = new Date(endDateObj.getTime() + 7 * 24 * 60 * 60 * 1000);
 
   let status = '';
-  // console.log(`submitDate: ${submitDate}`);
-  // console.log(`endDateObj: ${endDateObj}`);
-  // console.log(`sevenDaysAfterEndDate: ${sevenDaysAfterEndDate}`);
-  // console.log(`thirdOfNextMonth: ${thirdOfNextMonth}`);
-  // console.log(`isDraft: ${isDraft}`);
-  // Check if the report is a draft
 
   if (isDraft===true) {
     status = 'draft';
@@ -612,7 +640,7 @@ const createProjectReport = asyncHandler(async (req, res) => {
   const formData = {
     projectId,
     projectName,
-    facultyName,
+    // facultyName,
     venue,
     projectMode,
     startDate,
@@ -623,14 +651,20 @@ const createProjectReport = asyncHandler(async (req, res) => {
     isAnInstallation,
     isFlagship,
     isJointProject,
+    jointProjectPartner,
     projectAim,
     projectGroundwork,
+    projectSummary,
     income,
     expense,
     profit,
     loss,
+    financeExcelSheet: financeExcelSheetData?.secure_url,
     feedbackList: feedbackArray,
     chairPersons,
+    activeHomeClubMembers,
+    guestHomeClubMembers,
+    districtCouncilMembers,
     rotarians,
     alumnus,
     interactors,
@@ -678,7 +712,7 @@ const getProjectReports = asyncHandler(async (req, res) => {
   // console.log(submittedBy);
 
   const userObjectId = new mongoose.Types.ObjectId(userId);
-  // console.log("user object id: ", userObjectId)
+  // console.log("user object id of project report: ", userObjectId)
 
   const submittedBy = userObjectId || req.user._id; // Fallback to current user's ID if userId is not provided
   // console.log("submitted by: ",submittedBy);
@@ -731,25 +765,61 @@ const deleteProjectReport = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
   const submittedBy = req.user._id;
 
-  // console.log("Project Id: ", projectId)
-
   try {
-    const deletedProject = await ProjectReport.findOneAndDelete({ projectId });
+    // Find the project report by its ID
+    const existingProject = await ProjectReport.findOne({ projectId });
 
-    if (deletedProject) {
-      return res.status(202).json(
-        new ApiResponse(202, {}, 'Project report removed successfully')
-      );
+    // console.log("delete project: ", existingProject)
+
+    if (!existingProject) {
+      return res.status(404).json(new ApiError(404, 'No project found to remove'));
+    }
+
+    let fileDeleted = false;
+
+    // Check if the project has a finance Excel sheet URL
+    // console.log("financeExcelSheet: ", existingProject.financeExcelSheet)
+    if (existingProject.financeExcelSheet) {
+
+      // Extract the public ID from the Cloudinary URL
+      const url = existingProject.financeExcelSheet;
+      const cloudinaryPublicId = url
+        .split('/')
+        .slice(-2)
+        .join('/')
+        .replace(/^v\d+\//, '');
+      // console.log("Extracted public ID:", cloudinaryPublicId);
+
+      // Get details of the file from Cloudinary
+      const resource = await cloudinary.api.resource(cloudinaryPublicId, { resource_type: 'raw' });
+      // console.log("Resource details:", resource);
+
+      if (!resource || !resource.asset_id) {
+        console.warn(`File with Public ID ${cloudinaryPublicId} not found on Cloudinary.`);
+      } else {
+        // Delete the file from Cloudinary
+        const result = await cloudinary.uploader.destroy(cloudinaryPublicId, { resource_type: 'raw' });
+        // console.log("Cloudinary deletion result:", result);
+
+        if (result.result === 'ok') {
+          fileDeleted = true;
+        }
+      }
+    }
+
+    if (fileDeleted || !existingProject.financeExcelSheet) {
+      // Delete the project report from the database
+      await ProjectReport.deleteOne({ projectId });
+      return res.status(200).json({ message: 'Project report and associated files deleted successfully.' });
     } else {
-      return res.status(404).json(
-        new ApiError(404, 'No project found to remove')
-      );
+      return res.status(400).json(new ApiError(400, 'Failed to delete associated files.'));
     }
   } catch (error) {
     console.error('Error deleting project:', error);
     return res.status(500).json(new ApiError(500, 'Internal server error'));
   }
 });
+
 
 
 const generateDraftId = async () => {
@@ -792,14 +862,19 @@ const createProjectDraft = asyncHandler(async (req, res) => {
     isAnInstallation,
     isFlagship,
     isJointProject,
+    jointProjectPartner,
     projectAim,
     projectGroundwork,
+    projectSummary,
     income,
     expense,
     profit,
     loss,
     feedbackList,
     chairPersons,
+    activeHomeClubMembers,
+    guestHomeClubMembers,
+    districtCouncilMembers,
     rotarians,
     alumnus,
     interactors,
@@ -813,6 +888,7 @@ const createProjectDraft = asyncHandler(async (req, res) => {
     supportDocumentUrl,
   } = req.body;
 
+  // const financeExcelSheet  = req.file;
   const submittedBy = req.user._id;
 
   // console.log("is draft: ", isDraft)
@@ -842,6 +918,9 @@ const createProjectDraft = asyncHandler(async (req, res) => {
     const expenseValue = Number(expense);
     const profitValue = Number(profit);
     const lossValue = Number(loss);
+    const activeHomeClubMembersValue = Number(activeHomeClubMembers);
+    const guestHomeClubMembersValue = Number(guestHomeClubMembers);
+    const districtCouncilMembersValue = Number(districtCouncilMembers);
     const rotariansValue = Number(rotarians);
     const alumnusValue = Number(alumnus);
     const interactorsValue = Number(interactors);
@@ -857,7 +936,25 @@ const createProjectDraft = asyncHandler(async (req, res) => {
     // console.log("is draft boolean: ", isDraftBool)
 
     if (isDraftBool) {
+      // let financeExcelSheetData = null;
+
+      // if (financeExcelSheet) {
+      //   // If there's a new file uploaded, first delete the old one if it exists
+      //   if (draftIdValue && draftId !== 'null') {
+      //     const existingDraft = await ProjectDraft.findOne({ draftId, submittedBy });
+          
+      //     if (existingDraft && existingDraft.financeExcelSheetPublicId) {
+      //       // Delete the old file from Cloudinary
+      //       await cloudinary.uploader.destroy(existingDraft.financeExcelSheetPublicId);
+      //     }
+      //   }
+
+      //   // Upload new file to Cloudinary
+      //   financeExcelSheetData = await uploadOnCloudinary(financeExcelSheet.path, 'drafts/project_reports');
+      // }
       
+      // console.log("Upload failed: ", financeExcelSheetData)
+
       if (draftIdValue) {
         // Update existing draft if draftId is provided
         const updatedDraft = await ProjectDraft.findOneAndUpdate(
@@ -874,14 +971,19 @@ const createProjectDraft = asyncHandler(async (req, res) => {
             isAnInstallation: isAnInstallationBool,
             isFlagship: isFlagshipBool,
             isJointProject: isJointProjectBool,
+            jointProjectPartner,
             projectAim,
             projectGroundwork,
+            projectSummary,
             income: incomeValue,
             expense: expenseValue,
             profit: profitValue,
             loss: lossValue,
             feedbackList: feedbackList ? JSON.parse(feedbackList) : [],
             chairPersons: chairPersonsArray,
+            activeHomeClubMembers: activeHomeClubMembersValue,
+            guestHomeClubMembers: guestHomeClubMembersValue,
+            districtCouncilMembers: districtCouncilMembersValue,
             rotarians: rotariansValue,
             alumnus: alumnusValue,
             interactors: interactorsValue,
@@ -893,6 +995,8 @@ const createProjectDraft = asyncHandler(async (req, res) => {
             coverImageUrl,
             attendanceImageUrl,
             supportDocumentUrl,
+            // financeExcelSheet: financeExcelSheetData?.secure_url,
+            // financeExcelSheetPublicId: financeExcelSheetData?.public_id,
             updatedAt: Date.now() // Update the timestamp
           },
           { new: true } // Return the updated document
@@ -924,14 +1028,21 @@ const createProjectDraft = asyncHandler(async (req, res) => {
           isAnInstallation: isAnInstallationBool,
           isFlagship: isFlagshipBool,
           isJointProject: isJointProjectBool,
+          jointProjectPartner,
           projectAim,
           projectGroundwork,
+          projectSummary,
           income: incomeValue,
           expense: expenseValue,
           profit: profitValue,
           loss: lossValue,
+          // financeExcelSheet: financeExcelSheetData?.secure_url,
+          // financeExcelSheetPublicId: financeExcelSheetData?.public_id,
           feedbackList: feedbackList ? JSON.parse(feedbackList) : [],
           chairPersons: chairPersonsArray,
+          activeHomeClubMembers: activeHomeClubMembersValue,
+          guestHomeClubMembers: guestHomeClubMembersValue,
+          districtCouncilMembers: districtCouncilMembersValue,
           rotarians: rotariansValue,
           alumnus: alumnusValue,
           interactors: interactorsValue,
@@ -967,17 +1078,47 @@ const deleteProjectDraft = asyncHandler(async (req, res) => {
   const submittedBy = req.user._id;
 
   try {
-    const deletedDraft = await ProjectDraft.findOneAndDelete({ draftId, submittedBy });
+    // Find the draft by ID
+    const existingDraft = await ProjectDraft.findOne({ draftId, submittedBy });
 
-    if (deletedDraft) {
-      return res.status(202).json(
-        new ApiResponse(202, {}, 'Draft removed successfully')
-      );
-    } else {
-      return res.status(404).json(
-        new ApiError(404, 'No draft found to remove')
-      );
+    if (!existingDraft) {
+        return res.status(404).json(new ApiError(404, 'Draft not found.'));
     }
+
+    // const cloudinaryPublicId = existingDraft.financeExcelSheetPublicId
+    // Check if there is an associated financeExcelSheetPublicId
+    // console.log("public Id: ", cloudinaryPublicId)
+    
+    // let fileDeleted = false;
+
+    // if (cloudinaryPublicId) {
+    //   console.log("Original public Id: ", cloudinaryPublicId);
+
+    //   // Get details of the file from Cloudinary
+    //   const resource = await cloudinary.api.resource(cloudinaryPublicId, { resource_type: 'raw' });
+    //   console.log("Resource: ", resource);
+
+    //   if (!resource || !resource.asset_id) {
+    //     console.warn(`File with Public Id ${cloudinaryPublicId} not found on Cloudinary.`);
+    //   } else {
+    //     // Delete the file
+    //     const result = await cloudinary.uploader.destroy(cloudinaryPublicId, { resource_type: 'raw' });
+    //     console.log("Cloudinary deletion result: ", result);
+
+    //     if (result.result === 'ok') {
+    //       fileDeleted = true;
+    //     }
+    //   }
+    // }
+
+    if (existingDraft) {
+      // Delete the draft from the database
+      await ProjectDraft.deleteOne({ draftId, submittedBy });
+      return res.status(200).json({ message: 'Draft and associated files deleted successfully.' });
+    } else {
+      return res.status(400).json(new ApiError(400, 'Failed to delete associated files.'));
+    }
+
   } catch (error) {
     console.error('Error deleting draft:', error);
     return res.status(500).json(new ApiError(500, 'Internal server error'));
@@ -1020,6 +1161,200 @@ const getProjectDrafts = asyncHandler(async (req, res) => {
 });
 
 
+const generateMouId = async () => {
+
+  const prefix = 'MOU';
+  const year = new Date().getFullYear();
+  const limit = 1000;
+
+  // Find the last meeting report with the given prefix
+  const lastReport = await RotaractMou.findOne({ 
+      mouId: { $regex: `^${prefix}${year}` }
+  }).sort({ mouId: -1 });
+
+  let lastId = lastReport ? lastReport.mouId : `${prefix}${year}0000`;
+
+  // Extract the sequence number and increment it
+  const sequence = parseInt(lastId.slice(-4), 10);
+  const newSequence = (sequence + 1) % limit;
+
+  // Format the new sequence with leading zeros
+  const formattedSequence = String(newSequence).padStart(4, '0');
+
+  // Create the new meeting ID
+  const newMouId = `${prefix}${year}${formattedSequence}`;
+
+  return newMouId;
+};
+
+const createMouReport = asyncHandler(async (req, res) => {
+  const { 
+    sponsorName, 
+    sponsorAmount, 
+    deliverablesOfferedBySponsor,
+    deliverablesOfferedByClub,
+    dateOfSigning,
+  } = req.body;
+
+  const mouPdfUpload = req.file;
+  const submittedBy = req.user._id;
+
+  const mouId = await generateMouId();
+  
+  if (sponsorAmount < 0) {
+    throw new ApiError(400, "All numeric fields must be positive.");
+  }
+
+  if ([sponsorName, dateOfSigning].some(field => !field || field.trim() === '')) {
+    throw new ApiError(400, "All required fields must be filled.");
+  }
+
+  // console.log("mou pdf upload", mouPdfUpload)
+  const mouPdfUploadData = await uploadOnCloudinary(mouPdfUpload.path, 'mou_reports')
+
+  const mouReport = await RotaractMou.create({
+    mouId,
+    sponsorName, 
+    sponsorAmount, 
+    deliverablesOfferedBySponsor,
+    deliverablesOfferedByClub,
+    dateOfSigning,
+    mouPdfUpload: mouPdfUploadData?.secure_url,
+    submittedBy
+  });
+
+  if (!mouReport) {
+    throw new ApiError(500, "Something went wrong while creating the project report");
+  }
+
+  return res
+          .status(201)
+          .json(
+            new ApiResponse(
+              201, 
+              mouReport, 
+              "Mou report created successfully."
+            )
+          );
+});
+
+const getMouReport = asyncHandler(async (req, res) => {
+  const { page = 1, limit = 10, searchQuery = '', userId } = req.query;
+
+  // console.log("user id: ", userId)
+
+  const currentPage = Math.max(parseInt(page, 10), 1);
+  const pageSize = Math.max(parseInt(limit, 10), 1);
+  const skip = (currentPage - 1) * pageSize;
+
+  const userObjectId = userId ? new mongoose.Types.ObjectId(userId) : req.user._id;
+
+  // console.log("user object Id: ", userObjectId)
+
+  const searchFilter = searchQuery
+    ? {
+        $or: [
+          { sponsorName: { $regex: searchQuery, $options: 'i' } },
+        ],
+      }
+    : {};
+
+    // console.log("search filters: ", searchFilter)
+
+  const totalReports = await RotaractMou.countDocuments({
+    submittedBy: userObjectId,
+    ...searchFilter,
+  });
+
+  const reports = await RotaractMou.find({
+    submittedBy: userObjectId,
+    ...searchFilter,
+  })
+    .skip(skip)
+    .limit(pageSize)
+    .sort({ createdAt: -1 });
+
+
+  // console.log("Filtered Data From Mou: ", reports)
+
+  const totalPages = Math.ceil(totalReports / pageSize);
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        data: reports,
+        totalPages,
+        currentPage,
+        totalReports,
+      },
+      "MOU reports retrieved successfully."
+    )
+  );
+});
+
+const deleteMouReport = asyncHandler(async (req, res) => {
+  const { mouId } = req.params;
+  const submittedBy = req.user._id;
+
+  // console.log("Submitted by: ", submittedBy)
+
+  try {
+    // Find the project report by its ID
+    const existingMou = await RotaractMou.findOne({ mouId });
+
+    // console.log("delete project: ", existingMou)
+
+    if (!existingMou) {
+      return res.status(404).json(new ApiError(404, 'No project found to remove'));
+    }
+
+    let fileDeleted = false;
+
+    // Check if the project has a finance Excel sheet URL
+    // console.log("Mou PDF Upload: ", existingMou.mouPdfUpload)
+    if (existingMou.mouPdfUpload) {
+
+      // Extract the public ID from the Cloudinary URL
+      const url = existingMou.mouPdfUpload;
+      const cloudinaryPublicId = url
+        .split('/')
+        .slice(-2)
+        .join('/')
+        .replace(/^v\d+\//, '');
+
+      // console.log("Extracted public ID:", cloudinaryPublicId);
+
+      // Get details of the file from Cloudinary
+      const resource = await cloudinary.api.resource(cloudinaryPublicId, { resource_type: 'raw' });
+      // console.log("Resource details:", resource);
+
+      if (!resource || !resource.asset_id) {
+        console.warn(`File with Public ID ${cloudinaryPublicId} not found on Cloudinary.`);
+      } else {
+        // Delete the file from Cloudinary
+        const result = await cloudinary.uploader.destroy(cloudinaryPublicId, { resource_type: 'raw' });
+        // console.log("Cloudinary deletion result:", result);
+
+        if (result.result === 'ok') {
+          fileDeleted = true;
+        }
+      }
+    }
+
+    if (fileDeleted || !existingMou.mouPdfUpload) {
+      // Delete the project report from the database
+      await RotaractMou.deleteOne({ mouId });
+      return res.status(200).json({ message: 'MoU report and associated files deleted successfully.' });
+    } else {
+      return res.status(400).json(new ApiError(400, 'Failed to delete associated files.'));
+    }
+  } catch (error) {
+    console.error('Error deleting MoU:', error);
+    return res.status(500).json(new ApiError(500, 'Internal server error'));
+  }
+});
+
 
 
 
@@ -1039,5 +1374,9 @@ export {
 
   createProjectDraft,
   deleteProjectDraft,
-  getProjectDrafts
+  getProjectDrafts,
+
+  createMouReport,
+  getMouReport,
+  deleteMouReport
 };

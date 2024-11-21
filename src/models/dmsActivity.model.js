@@ -36,7 +36,7 @@ const activityReportSchema = new Schema(
         },
         activityMode: { 
             type: String, 
-            enum: ['online', 'on-ground'], 
+            enum: ['online', 'on-ground', 'both'], 
             required: true
         },
         startDate: { 
@@ -55,6 +55,10 @@ const activityReportSchema = new Schema(
         isJointActivity: { 
             type: Boolean, 
             default: false 
+        },
+        jointActivityPartner: { 
+            type: String, 
+            default: null 
         },
         status: { 
             type: String, 

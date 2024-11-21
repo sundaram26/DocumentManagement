@@ -97,4 +97,20 @@ userSchema.methods.generateRefreshToken = function (){
     )
 }
 
+userSchema.methods.generatePasswordResetToken = function () {
+    // Generate a random reset token or a JWT
+    const resetToken = jwt.sign(
+        { _id: this._id },
+        process.env.RESET_TOKEN_SECRET, // Use a separate secret for reset tokens
+        { expiresIn: '1h' } // Set expiration time for security
+    );
+
+    // Store the token and expiration in the user's record
+    this.resetPasswordToken = resetToken;
+    this.resetPasswordExpires = Date.now() + 3600000; // 1 hour expiration
+
+    return resetToken;
+};
+
+
 export const User = mongoose.model("User", userSchema)

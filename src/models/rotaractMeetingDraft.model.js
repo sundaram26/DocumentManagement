@@ -46,6 +46,18 @@ const rotaractMeetingDraftSchema = new Schema(
             type: Number, 
             default: 0 
         },
+        activeHomeClubMembers: {
+            type: Number,
+            default: 0,
+        },
+        guestHomeClubMembers: {
+            type: Number,
+            default: 0,
+        },
+        districtCouncilMembers: {
+            type: Number,
+            default: 0,
+        },
         rotarians: { 
             type: Number, 
             default: 0,

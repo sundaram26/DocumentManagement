@@ -3,6 +3,8 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { User } from "../models/user.model.js";
 import { generateAndSendOTP } from "./otp.controller.js";
+import { sendResetPasswordLinkEmail } from "../utils/emailSending.js";
+import jwt from "jsonwebtoken";
 
 
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -179,6 +181,74 @@ const loginUser = asyncHandler(async (req, res) => {
             )
 })
 
+// forgot password
+const forgotPassword = asyncHandler(async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        // Find the user by email
+        const user = await User.findOne({ email });
+        if (!user) {
+            throw new ApiError(404, "No account found with this email address");
+        }
+
+        // console.log("User from forgot password: ", user)
+
+        // Generate a reset token and save it to the user record
+        const resetToken = user.generatePasswordResetToken(); 
+        // console.log("Reset Token: ", resetToken)
+        await user.save();
+
+        // Generate the reset URL to include in the email
+        const resetUrl = `http://localhost:5173/auth/reset-password/${resetToken}`;
+        // console.log("reset Url: ", resetUrl)
+
+        // Send the reset password link via email
+        await sendResetPasswordLinkEmail(email, resetUrl);
+
+        return res
+            .status(200)
+            .json(
+                new ApiResponse(
+                    200,
+                    { email },
+                    "A password reset link has been sent to your email. Please check your inbox."
+                )
+            );
+    } catch (error) {
+        throw new ApiError(500, error.message || "Failed to process password reset request");
+    }
+});
+
+const resetPassword = asyncHandler(async (req, res) => {
+    const { token } = req.params; // Get the token from the URL
+    const { password } = req.body; // New password
+
+    // Verify the token and find the user associated with it
+    let decoded;
+    try {
+        decoded = jwt.verify(token, process.env.RESET_TOKEN_SECRET); // Use your reset token secret
+    } catch (error) {
+        console.error("decode jwt error: ", error.message)
+        throw new ApiError(400, "Invalid or expired token");
+    }
+
+    const user = await User.findById(decoded._id); // Get the user by ID
+
+    if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Update the user's password (the pre-save hook will hash the password)
+    user.password = password; // Set the new password directly
+
+    await user.save(); // Save the updated user document
+
+    return res.status(200).json({ message: 'Password has been reset successfully' });
+});
+
+
+
 // logout
 const logoutUser = asyncHandler ( async (req, res) => {
     //cookies hata do
@@ -211,6 +281,11 @@ const logoutUser = asyncHandler ( async (req, res) => {
 
 //Fetch User Profile
 const checkAuth = asyncHandler(async (req, res) => {
+    
+    if (!req.user) {
+        throw new ApiError(401, "User not authenticated");
+    }
+
     try {
         const user = await User.findById(req.user._id).select("-password -refreshToken");
 
@@ -300,6 +375,8 @@ const refreshAccessToken = asyncHandler( async (req, res) => {
 export {
     registerUser,
     loginUser,
+    forgotPassword,
+    resetPassword,
     logoutUser,
     refreshAccessToken,
     checkAuth,

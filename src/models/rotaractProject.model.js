@@ -26,23 +26,22 @@ const projectReportSchema = new Schema(
             type: String, 
             required: true 
         },
-        facultyName: { 
-            type: String,
-            required: true 
-        },
+        // facultyName: { 
+        //     type: String,
+        //     required: true 
+        // },
         venue: { 
             type: String, 
             required: true 
         },
         projectMode: { 
             type: String, 
-            enum: ['online', 'on-ground'], 
+            enum: ['online', 'on-ground', 'both'], 
             required: true
         },
         startDate: { 
             type: Date, 
             required: true
-
         },
         endDate: { 
             type: Date,
@@ -56,11 +55,11 @@ const projectReportSchema = new Schema(
                 'Career Developement', 
                 'International Service', 
                 'Sports', 
-                'Digital Communication', 
-                'Partner In Service', 
+                'Digital Communications', 
+                'Partners In Service', 
                 'Training, Revival And Sustenance', 
                 'Editorial', 
-                'Public Relations'
+                'Public Relations And Marketing'
             ],
             required: true
         },
@@ -73,11 +72,11 @@ const projectReportSchema = new Schema(
                 'Career Developement', 
                 'International Service', 
                 'Sports', 
-                'Digital Communication', 
-                'Partner In Service', 
+                'Digital Communications', 
+                'Partners In Service', 
                 'Training Revival And Sustenance', 
                 'Editorial', 
-                'Public Relations'
+                'Public Relations And Marketing'
             ], 
             // required: true
         },
@@ -96,6 +95,10 @@ const projectReportSchema = new Schema(
         isJointProject: { 
             type: Boolean, 
             default: false 
+        },
+        jointProjectPartner: {
+            type: String,
+            default: null
         },
         status: { 
             type: String, 
@@ -122,11 +125,19 @@ const projectReportSchema = new Schema(
             default: 0,
             required: true 
         },
+        financeExcelSheet: {
+            type: String,
+            required: true,
+        },
         projectAim: {
             type: String,
             required: true
         },
         projectGroundwork: {
+            type: String,
+            required: true
+        },
+        projectSummary: {
             type: String,
             required: true
         },
@@ -162,6 +173,21 @@ const projectReportSchema = new Schema(
                 'Rtr. Ketaki Deshmukh'
             ],
             required: true 
+        },
+        activeHomeClubMembers: {
+            type: Number,
+            default: 0,
+            required: true
+        },
+        guestHomeClubMembers: {
+            type: Number,
+            default: 0,
+            required: true
+        },
+        districtCouncilMembers: {
+            type: Number,
+            default: 0,
+            required: true
         },
         rotarians: { 
             type: Number,
