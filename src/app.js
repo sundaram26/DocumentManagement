@@ -33,7 +33,7 @@ app.use(cookieParser())
 app.use(session({
     secret: process.env.SESSION_SECRET_KEY, 
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false,
     store: store,
     cookie: { 
         secure: true,
