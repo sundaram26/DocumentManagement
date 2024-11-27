@@ -18,7 +18,7 @@ const userSchema = new Schema(
         },
         role: {
             type: String,
-            enum: ["DMS", "Rotaract"],
+            enum: ["DMS", "Rotaract", "admin"],
             required: true,
         },
         email: {
